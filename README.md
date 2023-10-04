@@ -4,7 +4,7 @@
 
 # Prequisites
 - docker
-- dake
+- make
 - ubuntu 20.04 and above
 
 # Environment setup and run
