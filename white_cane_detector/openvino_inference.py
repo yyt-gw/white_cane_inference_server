@@ -1,9 +1,10 @@
 """
 file : openvino_inference.py
 
-author : Shinohara-san (Modified by Yeyintthu)
+author : gw-shinohara
+author : Yeyintthu
 cdate : Tuesday October 3rd 2023
-mdate : Tuesday October 3rd 2023
+mdate : Tuesday October 6th 2023
 copyright: 2023 GlobalWalkers.inc. All rights reserved.
 """
 
@@ -80,10 +81,11 @@ class WhiteCaneDetector:
         boxes_xyxy[:, 3] = boxes[:, 1] + boxes[:, 3] / 2.0
         boxes_xyxy /= ratio
         dets = multiclass_nms(boxes_xyxy, scores, nms_thr=0.45, score_thr=SCORE_THRESH)
-        final_boxes = final_cls_inds = None
+
+        final_boxes = []
+        final_scores = []
+        final_cls_inds =[]
         if dets is not None:
             final_boxes = dets[:, :4]
             final_scores, final_cls_inds = dets[:, 4], dets[:, 5]
-        result_json = make_result_json(final_boxes, final_scores, final_cls_inds)
-
-        return result_json
+        return make_result_json(final_boxes, final_scores, final_cls_inds)
