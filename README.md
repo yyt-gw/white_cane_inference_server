@@ -9,11 +9,26 @@
 
 # Environment setup and run
 - Clone this repository and navigate to this [current directory](./)
-- To spin up the white cane detection server, please run (with sudo if your docker needs sudo)
+
+## Development
+- To spin up the white cane detection server for the development purpose, please run (with sudo if your docker needs sudo)
+```bash
+[sudo] make run-white-cane-openvino-env-dev 
+```
+- Inside container,
+```bash
+cd /{WHITE_CANE_ROOT}
+python3 app.py
+```
+
+## Deployment
+- To spin up the white cane detection server for the deployment purpose, please run (with sudo if your docker needs sudo)
 ```bash
 [sudo] make run-white-cane-openvino-env 
 ```
-- Above command includes
+
+# Commands explain
+- Above commands includes
   1. Download openvino weights
   2. Build ready-to-use docker env with dependencies
   3. Start the white cane detection inference server
