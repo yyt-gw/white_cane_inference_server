@@ -12,5 +12,5 @@ COPY . $WHITE_CANE_DIR/
 WORKDIR $WHITE_CANE_DIR/
 
 RUN pip install -r requirements.txt
-ENTRYPOINT [ "python3" ]
-CMD ["app.py"]
+
+CMD ["gunicorn", "-b", "0.0.0.0:8081", "-w", "4", "--threads", "2", "app:app"]

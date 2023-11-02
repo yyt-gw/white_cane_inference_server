@@ -10,4 +10,4 @@ MODEL_PATH = "/white-cane-openvino-inference/weights/openvino/best_ckpt/best_ckp
 SCORE_THRESH = 0.1
 DEVICE = "CPU"
 NUMBER_TOP = 10
-PORT = 8081
+PORT = 8001

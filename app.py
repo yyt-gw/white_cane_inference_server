@@ -9,9 +9,7 @@ copyright: 2023 GlobalWalkers.inc. All rights reserved.
 from flask import Flask, request, Response, json
 import numpy as np
 import cv2
-import os
 from white_cane_detector.openvino_inference import WhiteCaneDetector
-from config.config import PORT
 
 # Initialize the Flask application
 app = Flask(__name__)
@@ -38,8 +36,3 @@ def detect_white_cane():
     return Response(
         response=json.dumps(response), status=200, mimetype="application/json"
     )
-
-
-white_cane_port = os.getenv("WHITE_CANE_PORT", PORT)
-# start flask app
-app.run(host="0.0.0.0", port=white_cane_port)
