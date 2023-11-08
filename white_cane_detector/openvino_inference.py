@@ -88,4 +88,4 @@ class WhiteCaneDetector:
         if dets is not None:
             final_boxes = dets[:, :4]
             final_scores, final_cls_inds = dets[:, 4], dets[:, 5]
-        return make_result_json(final_boxes, final_scores, final_cls_inds), dets
+        return make_result_json(final_boxes, final_scores, final_cls_inds)
