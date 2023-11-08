@@ -6,10 +6,10 @@ cdate : Tuesday October 3rd 2023
 mdate : Tuesday October 3rd 2023
 copyright: 2023 GlobalWalkers.inc. All rights reserved.
 """
-from flask import Flask, request, Response, json
-import numpy as np
-import cv2
-import os
+import socket
+import pickle
+import struct
+import json
 from white_cane_detector.openvino_inference import WhiteCaneDetector
 from config.config import PORT
 from post_request import PostRequest
@@ -154,41 +154,52 @@ def post(boxes, img, frame_id, time_info):
             p.commit()
 
 
-# Initialize the Flask application
-app = Flask(__name__)
 
-white_cane_detector = WhiteCaneDetector()
-
-
-# cropped_images_dir = '/home/jetson1/cropped_images_dir'
-# route http posts to this method
-@app.route("/api/send_image", methods=["POST"])
-def detect_white_cane():
-    r = request
-    # convert string of image data to uint8
-    nparr = np.fromstring(r.data, np.uint8)
-    
-    cap_time = datetime.datetime.now()
-    # decode image
-    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-
-    result_json, boxes = white_cane_detector._predict(img)
-    print(result_json) 
-
-    # build a response dict to send back to client
-    response = {
-        "results": result_json,
-    }
-    infer_time = datetime.datetime.now()
-    post(boxes, img, 0, [cap_time, infer_time])
+class WhiteCaneSocketListener:
+    def __init__(self) -> None:
+        self._white_cane_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.__socket_address = ("", PORT)
+        self._white_cane_socket.bind(self.__socket_address)
+        self._white_cane_socket.listen(5)
+        print("White cane socket is now listening...")
 
 
-    return Response(
-        response=json.dumps(response), status=200, mimetype="application/json"
-    )
+def main():
+    white_cane_detector = WhiteCaneDetector()
+    white_cane_socket_listener = WhiteCaneSocketListener()
+    while True:
+        client_socket, addr = white_cane_socket_listener._white_cane_socket.accept()
+        print(f"Received connection from {addr}")
+        if client_socket:
+            try:
+                # used in handling binary data from network connections
+                data = b""
+                # Q: unsigned long long integer(8 bytes)
+                payload_size = struct.calcsize("Q")
+                while True:
+                    while len(data) < payload_size:
+                        packet = client_socket.recv(4 * 1024)
+                        if not packet:
+                            break
+                        data += packet
+                    packed_msg_size = data[:payload_size]
+                    data = data[payload_size:]
+                    msg_size = struct.unpack("Q", packed_msg_size)[0]
+                    while len(data) < msg_size:
+                        data += client_socket.recv(4 * 1024)
+                    frame_data = data[:msg_size]
+                    data = data[msg_size:]
+                    frame = pickle.loads(frame_data)
+                    result_json = white_cane_detector._predict(frame)
+                    # build a response dict to send back to client
+                    response = json.dumps({"results": result_json})
+                    print(response)
+                    client_socket.sendall(bytes(response, encoding="utf-8"))
+            except:
+                print("Connection dropped by client")
+
+        client_socket.close()
 
 
-white_cane_port = os.getenv("WHITE_CANE_PORT", PORT)
-# start flask app
-print(f"[info] Send data to IP:{IPADRESS}")
-app.run(host="0.0.0.0", port=white_cane_port)
+if __name__ == "__main__":
+    main()
