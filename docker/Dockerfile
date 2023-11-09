@@ -7,6 +7,8 @@ USER root
 # update and install necessary tools
 RUN pip3 install --upgrade pip
 
+RUN apt-get update && apt-get install -y vim iputils-ping net-tools
+
 RUN mkdir $WHITE_CANE_DIR
 
 COPY . $WHITE_CANE_DIR/

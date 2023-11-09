@@ -8,10 +8,5 @@
 '
 TAG_ENV=$1
 . ./env/white_cane_openvino.env
-if [ $TAG_ENV = "dev" ]; then
-    echo "Running dev server.."
-    docker run -it --rm -e WHITE_CANE_PORT=$WHITE_CANE_PORT -p $WHITE_CANE_PORT:$WHITE_CANE_PORT -v $(pwd):$WHITE_CANE_ROOT $WHITE_CANE_IMAGE:$TAG_ENV
-else
-    echo "Running live server.."
-    docker run -it --rm -e WHITE_CANE_PORT=$WHITE_CANE_PORT -p $WHITE_CANE_PORT:$WHITE_CANE_PORT $WHITE_CANE_IMAGE:$TAG_ENV
-fi
+echo "Running server.."
+docker run -it --rm --net=host -e WHITE_CANE_PORT=$WHITE_CANE_PORT -p 8081:8082 -v $(pwd):$WHITE_CANE_ROOT $WHITE_CANE_IMAGE:$TAG_ENV

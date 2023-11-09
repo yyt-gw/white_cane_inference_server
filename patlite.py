@@ -86,6 +86,7 @@ if __name__=="__main__":
     # IPADRESS=(subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True).communicate()[0]).decode("utf-8")
     IPADRESS="localhost"
     PORTNUM=10000
+    print(IPADRESS, PORTNUM)
     p = Patlite.get_instance()
     p.set_dest(IPADRESS, PORTNUM)
     p.set_status("red", p.ON)

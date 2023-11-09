@@ -13,7 +13,7 @@ import requests
 ENDPOINT = "http://localhost:8081/api/send_image"
 if __name__ == "__main__":
     #img = cv2.imread("/home/yyt/Downloads/cropped_images/white_cane_example.jpg")
-    img = cv2.imread("/white-cane-openvino-inference/data/20231020_122752_tmp.jpg")
+    img = cv2.imread("/home/ubuntu20/Documents/white_cane_inference_server/data/20231020_122752_tmp.jpg")
     im_encoded = cv2.imencode(".jpg", img)[1].tostring()
     for _ in range(9000):
         response = requests.post(

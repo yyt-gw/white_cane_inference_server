@@ -16,6 +16,8 @@ from post_request import PostRequest
 import patlite
 import datetime
 import uuid
+import threading
+
 IPADRESS ="localhost"
 JSON_URL = "http://" + IPADRESS + ":8080/api/v1/robot/event/json"
 IMAGE_URL = "http://" + IPADRESS + ":8080/api/v1/robot/event/image"
@@ -130,45 +132,35 @@ def post(boxes, img, frame_id, time_info):
         json_dict.update([('PostTime', post_time.strftime("%H:%M:%S.") + str(post_time.microsecond)[:3])])
         print(json_dict)
 
-        if 1:#detected_flg == False:
-            print("Do patlite")
-            detected_flg = True
-            detected_time = now_time
-            p = patlite.Patlite.get_instance()
-            p.set_dest(IPADRESS, 10000)
-            p.set_status("red", p.ON)
-            p.set_status("yellow", p.BLINK1)
-            p.set_status("green", p.BLINK2)
-            p.set_status("buzzer", p.ON)
-            p.commit()
-       
-        #if (now_time - tmp_time).seconds < 10:        
-        #    return
-        tmp_time=now_time
-    if 0:#detected_flg == True:
-        if (now_time - detected_time).seconds > 10:
-            detected_flg = False
-            p = patlite.Patlite.get_instance()
-            p.set_dest(IPADRESS, 10000)
-            p.reset_status()
-            p.commit()
-
-
-
 class WhiteCaneSocketListener:
     def __init__(self) -> None:
         self._white_cane_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.__socket_address = ("", PORT)
-        self._white_cane_socket.bind(self.__socket_address)
+        self._white_cane_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        socket_address = ("", PORT)
+        self._white_cane_socket.bind(socket_address)
         self._white_cane_socket.listen(5)
-        print("White cane socket is now listening...")
 
+        # patlite
+        print("do patlite")
+
+        # def run_patlite():
+        #     # patlite
+        #     __detected_flg = True
+        #     __patlite = patlite.Patlite.get_instance()
+        #     __patlite.set_dest(IPADRESS, 10001)
+        #     __patlite.set_status("red", __patlite.ON)
+        #     __patlite.set_status("yellow", __patlite.BLINK1)
+        #     __patlite.set_status("green", __patlite.BLINK2)
+        #     __patlite.set_status("buzzer", __patlite.ON)
+        #     __patlite.commit()
+        # self.__run_patlite_thread = threading.Thread(target=run_patlite)
+        print(f"White cane socket is now listening {PORT}...")
 
 def main():
     white_cane_detector = WhiteCaneDetector()
     white_cane_socket_listener = WhiteCaneSocketListener()
     while True:
-        client_socket, addr = white_cane_socket_listener._white_cane_socket.accept()
+        client_socket, addr = white_cane_socket_listener._white_cane_socket.accept() # Need change multi threding
         print(f"Received connection from {addr}")
         if client_socket:
             try:
@@ -195,9 +187,17 @@ def main():
                     response = json.dumps({"results": result_json})
                     print(response)
                     client_socket.sendall(bytes(response, encoding="utf-8"))
-            except:
-                print("Connection dropped by client")
 
+                    if 1:#detected_flg == False:
+                        print("Do patlite bright")
+                        # self.__run_patlite_thread.start()
+                
+                    #if (now_time - tmp_time).seconds < 10:        
+                    #    return
+                    #tmp_time=now_time
+
+            except Exception as e:
+                print(f"{e}")
         client_socket.close()
 
 
