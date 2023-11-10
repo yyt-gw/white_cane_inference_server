@@ -21,6 +21,7 @@ import time
 from white_cane_detector.utils import utils
 
 
+
 IPADRESS ="localhost"
 JSON_URL = "http://" + IPADRESS + ":8080/api/v1/robot/event/json"
 IMAGE_URL = "http://" + IPADRESS + ":8080/api/v1/robot/event/image"
@@ -29,7 +30,7 @@ tmp_time = datetime.datetime.now()
 detected_time = datetime.datetime.now()
 detected_flg = False
 counter=0
-KEEP_TURNON_TIME = 10
+KEEP_TURNON_TIME = 3
 keep_turnon_count = KEEP_TURNON_TIME
 exist_countdown = False
 
@@ -137,42 +138,40 @@ def post(boxes, img, frame_id, time_info):
         json_dict.update([('PostTime', post_time.strftime("%H:%M:%S.") + str(post_time.microsecond)[:3])])
         # print(json_dict)
 
-@utils.calc_time
+#@utils.calc_time
 def countdown_turnoff_light():
     global keep_turnon_count
     while 0 < keep_turnon_count:
-        print(keep_turnon_count)
         time.sleep(2)
-        print(keep_turnon_count)
         keep_turnon_count -= 1
     turnoff_light()
 countdown_thread = threading.Thread(target=countdown_turnoff_light)
 
-@utils.calc_time
+#@utils.calc_time
 def reset_keep_turnon_count():
     global keep_turnon_count
     keep_turnon_count = KEEP_TURNON_TIME
 
-@utils.calc_time
+#@utils.calc_time
 def get_whitecane():
     global countdown_thread
     reset_keep_turnon_count()
-    print("found whitecane")
     if not countdown_thread.is_alive():
-        turnon_light()
+        countdown_thread = threading.Thread(target=countdown_turnoff_light)
         countdown_thread.start() # alive light keep_turnon_count
+        turnon_light()
 
 # Initialize the Flask application
 app = Flask(__name__)
 
 white_cane_detector = WhiteCaneDetector()
 
-@utils.calc_time
+#@utils.calc_time
 def make_response(response):
     return Response(
         response=json.dumps(response), status=200, mimetype="application/json"
     )
-@utils.calc_time
+#@utils.calc_time
 def convert_to_image(r):
     # convert string of image data to uint8
     nparr = np.fromstring(r.data, np.uint8)
@@ -180,18 +179,9 @@ def convert_to_image(r):
     # decode image
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     return img
-
-
-# cropped_images_dir = '/home/jetson1/cropped_images_dir'
-# route http posts to this method
-@app.route("/api/send_image", methods=["POST"])
 @utils.calc_time
-def detect_white_cane():
-    global counter
-
-    r = request
+def processes(img):
     cap_time = datetime.datetime.now()
-    img = convert_to_image(r)
     # print("GET IMAGE")
 
     result_jsons, boxes = white_cane_detector._predict(img)
@@ -199,11 +189,13 @@ def detect_white_cane():
 
     if result_jsons !=[]:
         for idx, result_json in enumerate(result_jsons):
-            print(result_json['class'])
+            print(f"Found id:{idx} cls:{result_json['class']}")
             if result_json['class']=='white_cane':
                 get_whitecane()
                 break
                 # cv2.imwrite(f"/white-cane-openvino-inference/data/{cap_time}_{idx}.jpg", img)
+            else:
+                print("whitecane is Not found")
     # print(f"exist countdown: {countdown_thread.is_alive()}")
 
     # build a response dict to send back to client
@@ -211,10 +203,20 @@ def detect_white_cane():
         "results": result_jsons,
     }
     infer_time = datetime.datetime.now()
-    # post(boxes, img, 0, [cap_time, infer_time])
+    post(boxes, img, 0, [cap_time, infer_time])
+    return response
+
+# cropped_images_dir = '/home/jetson1/cropped_images_dir'
+# route http posts to this method
+@app.route("/api/send_image", methods=["POST"])
+@utils.calc_time
+def get_image_and_detect_white_cane():
+    global counter
+    r = request
+    img = convert_to_image(r)
+    response = processes(img)
     counter=counter+1
     return make_response(response)
-
 
 white_cane_port = os.getenv("WHITE_CANE_PORT", PORT)
 # start flask app
