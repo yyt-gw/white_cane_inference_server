@@ -9,6 +9,7 @@ copyright: 2023 GlobalWalkers.inc. All rights reserved.
 import cv2
 import json
 import requests
+import time
 
 ENDPOINT = "http://localhost:8081/api/send_image"
 if __name__ == "__main__":
@@ -19,6 +20,8 @@ if __name__ == "__main__":
         response = requests.post(
             ENDPOINT, data=im_encoded, headers={"content-type": "image/jpeg"}
         )
+        time.sleep(0.1)
+
         #result_json = response.json()
         #print(json.dumps(result_json, indent=4))
         #print(response.status_code)

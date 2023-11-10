@@ -131,9 +131,10 @@ def calc_time(meat_paste):
         result = meat_paste(*args, **kwargs)
         ed = time.time()
         dt = ed - st
-        print(f"Execution time: {dt}s")
-        print(f"Execution FPS : {1/dt}")
-
+        print(f" [== Function:{meat_paste.__name__} ===========")
+        print(f"  == Execution time: {dt}s")
+        print(f"  == Execution FPS : {1/dt}")
+        print(f"")
         return result
 
     return wrapper

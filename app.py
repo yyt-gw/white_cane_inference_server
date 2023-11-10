@@ -18,6 +18,8 @@ import uuid
 from patrol_light import turnon_light, turnoff_light
 import threading
 import time
+from white_cane_detector.utils import utils
+
 
 IPADRESS ="localhost"
 JSON_URL = "http://" + IPADRESS + ":8080/api/v1/robot/event/json"
@@ -27,7 +29,7 @@ tmp_time = datetime.datetime.now()
 detected_time = datetime.datetime.now()
 detected_flg = False
 counter=0
-KEEP_TURNON_TIME = 2
+KEEP_TURNON_TIME = 10
 keep_turnon_count = KEEP_TURNON_TIME
 exist_countdown = False
 
@@ -135,74 +137,83 @@ def post(boxes, img, frame_id, time_info):
         json_dict.update([('PostTime', post_time.strftime("%H:%M:%S.") + str(post_time.microsecond)[:3])])
         # print(json_dict)
 
+@utils.calc_time
+def countdown_turnoff_light():
+    global keep_turnon_count
+    while 0 < keep_turnon_count:
+        print(keep_turnon_count)
+        time.sleep(2)
+        print(keep_turnon_count)
+        keep_turnon_count -= 1
+    turnoff_light()
+countdown_thread = threading.Thread(target=countdown_turnoff_light)
+
+@utils.calc_time
+def reset_keep_turnon_count():
+    global keep_turnon_count
+    keep_turnon_count = KEEP_TURNON_TIME
+
+@utils.calc_time
+def get_whitecane():
+    global countdown_thread
+    reset_keep_turnon_count()
+    print("found whitecane")
+    if not countdown_thread.is_alive():
+        turnon_light()
+        countdown_thread.start() # alive light keep_turnon_count
 
 # Initialize the Flask application
 app = Flask(__name__)
 
 white_cane_detector = WhiteCaneDetector()
 
-def countdown_turnoff_light():
-    global keep_turnon_count
-    global exist_countdown
-    exist_countdown = True
-    while 0 < keep_turnon_count:
-        time.sleep(1)
-        keep_turnon_count -= 1
-        print(f"Exist countdown thread:{exist_countdown}")
-    turnoff_light()
-    exist_countdown = False
-def update_countdown_timer():
-    global keep_turnon_count
-    while()
-def reset_keep_turnon_count():
-    global keep_turnon_count
-    keep_turnon_count = KEEP_TURNON_TIME
+@utils.calc_time
+def make_response(response):
+    return Response(
+        response=json.dumps(response), status=200, mimetype="application/json"
+    )
+@utils.calc_time
+def convert_to_image(r):
+    # convert string of image data to uint8
+    nparr = np.fromstring(r.data, np.uint8)
+    # print("cap_time", counter, cap_time)
+    # decode image
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    return img
+
 
 # cropped_images_dir = '/home/jetson1/cropped_images_dir'
 # route http posts to this method
 @app.route("/api/send_image", methods=["POST"])
+@utils.calc_time
 def detect_white_cane():
     global counter
-    global exist_countdown
-    r = request
-    countdown_thread = threading.Thread(target=countdown_turnoff_light)
 
-    # convert string of image data to uint8
-    nparr = np.fromstring(r.data, np.uint8)
+    r = request
     cap_time = datetime.datetime.now()
-    # print("cap_time", counter, cap_time)
-    # decode image
-    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    img = convert_to_image(r)
     # print("GET IMAGE")
 
     result_jsons, boxes = white_cane_detector._predict(img)
     # print(result_jsons)
 
+    if result_jsons !=[]:
+        for idx, result_json in enumerate(result_jsons):
+            print(result_json['class'])
+            if result_json['class']=='white_cane':
+                get_whitecane()
+                break
+                # cv2.imwrite(f"/white-cane-openvino-inference/data/{cap_time}_{idx}.jpg", img)
+    # print(f"exist countdown: {countdown_thread.is_alive()}")
+
     # build a response dict to send back to client
     response = {
         "results": result_jsons,
     }
-
-    # print(result_jsons)
-    if result_jsons !=[]:
-        
-        for idx, result_json in enumerate(result_jsons):
-            print(result_json['class'])
-            if result_json['class']=='white_cane':
-                reset_keep_turnon_count()
-                if not exist_countdown:
-                    turnon_light()
-                    countdown_thread.start() # alive light keep_turnon_count
-                # cv2.imwrite(f"/white-cane-openvino-inference/data/{cap_time}_{idx}.jpg", img)
-    print(f"exist countdown: {exist_countdown}")
     infer_time = datetime.datetime.now()
     # post(boxes, img, 0, [cap_time, infer_time])
-    # print("diff",counter, datetime.datetime.now() - cap_time)
     counter=counter+1
-
-    return Response(
-        response=json.dumps(response), status=200, mimetype="application/json"
-    )
+    return make_response(response)
 
 
 white_cane_port = os.getenv("WHITE_CANE_PORT", PORT)
