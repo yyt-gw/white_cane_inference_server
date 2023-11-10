@@ -13,9 +13,12 @@ import os
 from white_cane_detector.openvino_inference import WhiteCaneDetector
 from config.config import PORT
 from post_request import PostRequest
-import patlite
 import datetime
 import uuid
+from patrol_light import turnon_light, turnoff_light
+import threading
+import time
+
 IPADRESS ="localhost"
 JSON_URL = "http://" + IPADRESS + ":8080/api/v1/robot/event/json"
 IMAGE_URL = "http://" + IPADRESS + ":8080/api/v1/robot/event/image"
@@ -24,6 +27,10 @@ tmp_time = datetime.datetime.now()
 detected_time = datetime.datetime.now()
 detected_flg = False
 counter=0
+KEEP_TURNON_TIME = 2
+keep_turnon_count = KEEP_TURNON_TIME
+exist_countdown = False
+
 
 class_list = [
     "person",
@@ -69,8 +76,6 @@ def post(boxes, img, frame_id, time_info):
 
     #img_info = cv2.imencode('.jpg', img)[1].tostring()
     #PR.request_image(IMAGE_URL, "test", img_info)
-    print("count:", counter)
-    counter=counter+1
     if boxes is not None:
         for i in range(len(boxes)):
             box = boxes[i]
@@ -86,7 +91,7 @@ def post(boxes, img, frame_id, time_info):
             y0 = int(box[1])
             x1 = int(box[2])
             y1 = int(box[3])
-            print("x0:",x0)
+            # print("x0:",x0)
 
             # if type(score) == torch.Tensor:
             #     score = score.item()
@@ -109,7 +114,7 @@ def post(boxes, img, frame_id, time_info):
             )
             json_dict["object"].append(object_dict)
     if len(json_dict["object"]) != 0:
-        print(json_dict)
+        # print(json_dict)
         # FrameIDID毎に一意なリクエストIDを生成する
         req_id = str(uuid.uuid4())
 
@@ -117,7 +122,7 @@ def post(boxes, img, frame_id, time_info):
         #    "JSONのPOSTリクエストを開始しました.... URL: ",
         #    JSON_URL
         #)
-        print("POST JSON URL:", JSON_URL)
+        # print("POST JSON URL:", JSON_URL)
         
         # image_path = 'tmp.jpg'
         # cv2.imwrite("tmp.jpg", img)
@@ -128,30 +133,7 @@ def post(boxes, img, frame_id, time_info):
         #json_dict.update([('PreEndTime', time_info[1].strftime("%H:%M:%S.") + str(time_info[1].microsecond)[:3])])
         json_dict.update([('InferEndTime', time_info[1].strftime("%H:%M:%S.") + str(time_info[1].microsecond)[:3])])
         json_dict.update([('PostTime', post_time.strftime("%H:%M:%S.") + str(post_time.microsecond)[:3])])
-        print(json_dict)
-
-        if 1:#detected_flg == False:
-            print("Do patlite")
-            detected_flg = True
-            detected_time = now_time
-            p = patlite.Patlite.get_instance()
-            p.set_dest(IPADRESS, 10000)
-            p.set_status("red", p.ON)
-            p.set_status("yellow", p.BLINK1)
-            p.set_status("green", p.BLINK2)
-            p.set_status("buzzer", p.ON)
-            p.commit()
-       
-        #if (now_time - tmp_time).seconds < 10:        
-        #    return
-        tmp_time=now_time
-    if 0:#detected_flg == True:
-        if (now_time - detected_time).seconds > 10:
-            detected_flg = False
-            p = patlite.Patlite.get_instance()
-            p.set_dest(IPADRESS, 10000)
-            p.reset_status()
-            p.commit()
+        # print(json_dict)
 
 
 # Initialize the Flask application
@@ -159,29 +141,64 @@ app = Flask(__name__)
 
 white_cane_detector = WhiteCaneDetector()
 
+def countdown_turnoff_light():
+    global keep_turnon_count
+    global exist_countdown
+    exist_countdown = True
+    while 0 < keep_turnon_count:
+        time.sleep(1)
+        keep_turnon_count -= 1
+        print(f"Exist countdown thread:{exist_countdown}")
+    turnoff_light()
+    exist_countdown = False
+def update_countdown_timer():
+    global keep_turnon_count
+    while()
+def reset_keep_turnon_count():
+    global keep_turnon_count
+    keep_turnon_count = KEEP_TURNON_TIME
 
 # cropped_images_dir = '/home/jetson1/cropped_images_dir'
 # route http posts to this method
 @app.route("/api/send_image", methods=["POST"])
 def detect_white_cane():
+    global counter
+    global exist_countdown
     r = request
+    countdown_thread = threading.Thread(target=countdown_turnoff_light)
+
     # convert string of image data to uint8
     nparr = np.fromstring(r.data, np.uint8)
-    
     cap_time = datetime.datetime.now()
+    # print("cap_time", counter, cap_time)
     # decode image
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    # print("GET IMAGE")
 
-    result_json, boxes = white_cane_detector._predict(img)
-    print(result_json) 
+    result_jsons, boxes = white_cane_detector._predict(img)
+    # print(result_jsons)
 
     # build a response dict to send back to client
     response = {
-        "results": result_json,
+        "results": result_jsons,
     }
-    infer_time = datetime.datetime.now()
-    post(boxes, img, 0, [cap_time, infer_time])
 
+    # print(result_jsons)
+    if result_jsons !=[]:
+        
+        for idx, result_json in enumerate(result_jsons):
+            print(result_json['class'])
+            if result_json['class']=='white_cane':
+                reset_keep_turnon_count()
+                if not exist_countdown:
+                    turnon_light()
+                    countdown_thread.start() # alive light keep_turnon_count
+                # cv2.imwrite(f"/white-cane-openvino-inference/data/{cap_time}_{idx}.jpg", img)
+    print(f"exist countdown: {exist_countdown}")
+    infer_time = datetime.datetime.now()
+    # post(boxes, img, 0, [cap_time, infer_time])
+    # print("diff",counter, datetime.datetime.now() - cap_time)
+    counter=counter+1
 
     return Response(
         response=json.dumps(response), status=200, mimetype="application/json"
@@ -190,5 +207,5 @@ def detect_white_cane():
 
 white_cane_port = os.getenv("WHITE_CANE_PORT", PORT)
 # start flask app
-print(f"[info] Send data to IP:{IPADRESS}")
+# print(f"[info] Send data to IP:{IPADRESS}")
 app.run(host="0.0.0.0", port=white_cane_port)

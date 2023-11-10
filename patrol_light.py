@@ -1,6 +1,7 @@
 import socket
+import sys
 
-class Patlite:
+class PatrolLight:
     # default dest
     _host = '106.138.6.12'
     _port = 10000
@@ -71,7 +72,7 @@ class Patlite:
             try:
                 s.connect((self._host, self._port))
             except OSError as e:
-                print("[err] Cannot connect to patlite. Recheck for address or port.")
+                print("[ err ] Cannot connect to PatrolLight. Recheck for address or port.", sys.stderr)
                 return
             
             dat = self._sensor
@@ -80,18 +81,34 @@ class Patlite:
             data = s.recv(1024)
             print('Received', repr(data))
 
+def turnon_light( ip_address="localhost", port=10000 ):
+    p_i = PatrolLight.get_instance()
+    p_i.set_dest(ip_address, port)
+    p_i.set_status("red", p_i.ON)
+    p_i.set_status("yellow", p_i.BLINK1)
+    p_i.set_status("green", p_i.BLINK2)
+    p_i.set_status("buzzer", p_i.ON)
+    p_i.commit()
+
+def turnoff_light( ip_address="localhost", port=10000 ):
+    p_i = PatrolLight.get_instance()
+    p_i.set_dest(ip_address, port)
+    p_i.reset_status()
+    p_i.commit()
+
 if __name__=="__main__":
     # import subprocess
     # cmd="cat /etc/hosts | awk 'END{print $1}'|sed -r -e 's/[0-9]+$/1/g'"
     # IPADRESS=(subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True).communicate()[0]).decode("utf-8")
-    IPADRESS="localhost"
-    PORTNUM=10000
-    p = Patlite.get_instance()
-    p.set_dest(IPADRESS, PORTNUM)
-    p.set_status("red", p.ON)
-    p.set_status("yellow", p.BLINK1)
-    p.set_status("green", p.BLINK2)
-    p.set_status("buzzer", p.ON)
-    p.commit()
+    import time
+    ip_address="localhost"
+    port=10000
+    turnon_light(ip_address)
+    watcher=1
+    while 0<watcher:
+        print(f"Alive {watcher}")
+        time.sleep(1)
+        watcher-=1
+    turnoff_light(ip_address, port)
 
 
