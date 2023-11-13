@@ -3,10 +3,11 @@ file : app.py
 
 author : yyt
 cdate : Tuesday October 3rd 2023
-mdate : Tuesday October 3rd 2023
+mdate : Tuesday November 14 2023
 copyright: 2023 GlobalWalkers.inc. All rights reserved.
 """
-from flask import Flask, request, Response, json
+from fastapi import FastAPI, Request, Response
+import uvicorn
 import numpy as np
 import cv2
 import os
@@ -14,13 +15,14 @@ from white_cane_detector.openvino_inference import WhiteCaneDetector
 from config.config import PORT
 from post_request import PostRequest
 import datetime
+import json
 import uuid
 from patrol_light import turnon_light, turnoff_light
 import threading
 import time
 from white_cane_detector.utils import utils
-
-
+from pydantic import BaseModel
+from typing import List
 
 IPADRESS ="localhost"
 JSON_URL = "http://" + IPADRESS + ":8080/api/v1/robot/event/json"
@@ -161,20 +163,15 @@ def get_whitecane():
         countdown_thread.start() # alive light keep_turnon_count
         turnon_light()
 
-# Initialize the Flask application
-app = Flask(__name__)
+# Initialize the Fastapi application
+app = FastAPI()
 
 white_cane_detector = WhiteCaneDetector()
 
 #@utils.calc_time
-def make_response(response):
-    return Response(
-        response=json.dumps(response), status=200, mimetype="application/json"
-    )
-#@utils.calc_time
-def convert_to_image(r):
+def convert_to_image(img_bytes):
     # convert string of image data to uint8
-    nparr = np.fromstring(r.data, np.uint8)
+    nparr = np.fromstring(img_bytes, np.uint8)
     # print("cap_time", counter, cap_time)
     # decode image
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
@@ -198,27 +195,23 @@ def processes(img):
                 print("whitecane is Not found")
     # print(f"exist countdown: {countdown_thread.is_alive()}")
 
-    # build a response dict to send back to client
-    response = {
-        "results": result_jsons,
-    }
     infer_time = datetime.datetime.now()
     post(boxes, img, 0, [cap_time, infer_time])
-    return response
+    return result_jsons
 
 # cropped_images_dir = '/home/jetson1/cropped_images_dir'
 # route http posts to this method
-@app.route("/api/send_image", methods=["POST"])
-@utils.calc_time
-def get_image_and_detect_white_cane():
-    global counter
-    r = request
-    img = convert_to_image(r)
-    response = processes(img)
-    counter=counter+1
-    return make_response(response)
 
-white_cane_port = os.getenv("WHITE_CANE_PORT", PORT)
-# start flask app
-# print(f"[info] Send data to IP:{IPADRESS}")
-app.run(host="0.0.0.0", port=white_cane_port)
+class InferenceResponse(BaseModel):
+    results: List
+
+@app.post("/api/send_image", response_model=InferenceResponse)
+@utils.calc_time
+async def get_image_and_detect_white_cane(request: Request):
+    global counter
+    img_bytes = await request.body()
+    img = convert_to_image(img_bytes)
+    results = processes(img)
+    print(results)
+    counter=counter+1
+    return {"results" : results}

@@ -7,4 +7,5 @@
  * copyright: 2023 GlobalWalkers.inc. All rights reserved.
 '
 . ./env/white_cane_openvino.env
-docker build --build-arg WHITE_CANE_DIR=$WHITE_CANE_ROOT -t $WHITE_CANE_IMAGE:$WHITE_CANE_IMAGE_TAG -f docker/Dockerfile .
+docker build --build-arg WHITE_CANE_DIR=$WHITE_CANE_ROOT --build-arg WHITE_CANE_PORT=$WHITE_CANE_PORT \
+     -t $WHITE_CANE_IMAGE:$WHITE_CANE_IMAGE_TAG -f docker/Dockerfile .

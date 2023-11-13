@@ -10,6 +10,8 @@ import numpy as np
 import cv2
 from typing import Tuple
 import time
+import functools
+import asyncio
 from classes.grasped_classes import GRASPED_CLASSES
 
 
@@ -126,6 +128,7 @@ def multiclass_nms_class_aware(boxes, scores, nms_thr, score_thr):
 
 
 def calc_time(meat_paste):
+    @functools.wraps(meat_paste)
     def wrapper(*args, **kwargs):
         st = time.time()
         result = meat_paste(*args, **kwargs)
@@ -137,7 +140,21 @@ def calc_time(meat_paste):
         print(f"")
         return result
 
-    return wrapper
+    @functools.wraps(meat_paste)
+    async def async_wrapper(*args, **kwargs):
+        st = time.time()
+        result = await meat_paste(*args, **kwargs)
+        ed = time.time()
+        dt = ed - st
+        print(f" [== Function:{meat_paste.__name__} ===========")
+        print(f"  == Execution time: {dt}s")
+        print(f"  == Execution FPS : {1/dt}")
+        print(f"")
+        return result
+    if asyncio.iscoroutinefunction(meat_paste):
+        return async_wrapper
+    else:
+        return wrapper
 
 
 def postprocess(outputs, img_size, p6=False):
