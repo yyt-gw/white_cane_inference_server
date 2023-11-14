@@ -10,6 +10,7 @@ from flask import Flask, request, Response, json
 import numpy as np
 import cv2
 from white_cane_detector.openvino_inference import WhiteCaneDetector
+from white_cane_detector.utils import utils
 
 # Initialize the Flask application
 app = Flask(__name__)
@@ -20,6 +21,7 @@ white_cane_detector = WhiteCaneDetector()
 # cropped_images_dir = '/home/jetson1/cropped_images_dir'
 # route http posts to this method
 @app.route("/api/send_image", methods=["POST"])
+@utils.calc_time
 def detect_white_cane():
     r = request
     # convert string of image data to uint8
