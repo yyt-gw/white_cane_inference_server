@@ -1,0 +1,47 @@
+BEGIN:VCALENDAR
+PRODID:-//Google Inc//Google Calendar 70.9054//EN
+VERSION:2.0
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:shinohara@globalwalkers.co.jp
+X-WR-TIMEZONE:Asia/Tokyo
+BEGIN:VTIMEZONE
+TZID:Asia/Tokyo
+X-LIC-LOCATION:Asia/Tokyo
+BEGIN:STANDARD
+TZOFFSETFROM:+0900
+TZOFFSETTO:+0900
+TZNAME:JST
+DTSTART:19700101T000000
+END:STANDARD
+END:VTIMEZONE
+BEGIN:VEVENT
+DTSTART:20231118T020000Z
+DTEND:20231118T030000Z
+ORGANIZER:mailto:shinohara@globalwalkers.co.jp
+ATTENDEE;
+CUTYPE=INDIVIDUAL;
+ROLE=REQ-PARTICIPANT;
+PARTSTAT=NEEDS-ACTION;
+CN=shinohara@globalwalkers.co.jp;
+X-NUM-GUESTS=0:mailto:shinohara@globalwalkers.co.jp
+ATTENDEE;
+CUTYPE=INDIVIDUAL;
+ROLE=REQ-PARTICIPANT;
+PARTSTAT=ACCEPTED;
+X-NUM-GUESTS=0:mailto:globalwalkers.co.jp_tk01c60ioi52fso59563p04qko@group.calendar.google.com
+X-GOOGLE-CONFERENCE:https://meet.google.com/rzn-szxt-gjb
+CREATED:20231115T021116Z
+DESCRIPTION:-::~:~::~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~
+ :~:~:~:~:~:~:~:~::~:~::-\nJoin with Google Meet: https://meet.google.com/rz
+ n-szxt-gjb\nOr dial: (JP) +81 3-4545-0450 PIN: 3309015064385#\nMore phone n
+ umbers: https://tel.meet/rzn-szxt-gjb?pin=3309015064385&hs=7\n\nLearn more
+ about Meet at: https://support.google.com/a/users/answer/9282720\n\nPlease
+ do not edit this section.\n-::~:~::~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:
+ ~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~::~:~::-
+SEQUENCE:0
+STATUS:CONFIRMED
+SUMMARY:テスト
+TRANSP:OPAQUE
+END:VEVENT
+END:VCALENDAR
