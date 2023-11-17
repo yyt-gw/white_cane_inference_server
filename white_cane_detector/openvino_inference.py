@@ -58,7 +58,7 @@ class WhiteCaneDetector:
         log.info("Loading the model to the plugin")
         self.exec_net = self.ie.load_network(network=self.net, device_name=DEVICE)
 
-    @calc_time
+    #@calc_time
     def __run_openvino_inference(self, image):
         return self.exec_net.infer(inputs={self.input_blob: image})
 
@@ -88,4 +88,4 @@ class WhiteCaneDetector:
         if dets is not None:
             final_boxes = dets[:, :4]
             final_scores, final_cls_inds = dets[:, 4], dets[:, 5]
-        return make_result_json(final_boxes, final_scores, final_cls_inds), dets
+        return make_result_json(final_boxes, final_scores, final_cls_inds)
