@@ -179,12 +179,16 @@ def convert_to_image(r):
     # decode image
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     return img
+
+def target_classifier(threshold_y, bbox):
+    return (threshold_y <= bbox["ymax"]) # Compare y
+
 @utils.calc_time
 def processes(img):
     cap_time = datetime.datetime.now()
     # print("GET IMAGE")
 
-    result_jsons, boxes = white_cane_detector._predict(img)
+    result_jsons = white_cane_detector._predict(img)
     # print(result_jsons)
     
     import time
@@ -194,8 +198,13 @@ def processes(img):
     if result_jsons !=[]:
         for idx, result_json in enumerate(result_jsons):
             print(f"Found id:{idx} cls:{result_json['class']}")
+            threshold_y=320
+            if target_classifier(threshold_y=threshold_y, bbox=result_json["bbox"]):
+                print("out of target area")
+                continue
+            print(result_json)
             if result_json['class']=='white_cane':
-                get_whitecane()
+                #get_whitecane()
                 break
                 # cv2.imwrite(f"/white-cane-openvino-inference/data/{cap_time}_{idx}.jpg", img)
             else:
