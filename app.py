@@ -30,7 +30,7 @@ tmp_time = datetime.datetime.now()
 detected_time = datetime.datetime.now()
 detected_flg = False
 counter=0
-KEEP_TURNON_TIME = 3
+KEEP_TURNON_TIME = 5
 keep_turnon_count = KEEP_TURNON_TIME
 exist_countdown = False
 
@@ -186,6 +186,10 @@ def processes(img):
 
     result_jsons, boxes = white_cane_detector._predict(img)
     # print(result_jsons)
+    
+    import time
+    get_time=time.time()
+    cv2.imwrite(f"/white-cane-openvino-inference/data/tachikawa20231113/{get_time}.jpg", img)
 
     if result_jsons !=[]:
         for idx, result_json in enumerate(result_jsons):
