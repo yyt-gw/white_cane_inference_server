@@ -7,7 +7,7 @@
  * copyright: 2023 GlobalWalkers.inc. All rights reserved.
 '
 temp=./temp
-link_id=1hE-t82ScDhfM-LllkfplwOggdQ0cSTs6
+link_id=1-T6QoYhPSigFEPIPag43EDg5UFX6m7qv
 extracted_folder=white_cane_openvino
 openvino_weights_zip=$extracted_folder.zip
 weights_dest_dir=weights/openvino/best_ckpt
