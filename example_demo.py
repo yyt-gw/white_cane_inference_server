@@ -17,7 +17,7 @@ def overwrap_detected_frame(img, bbox, score, class_name, rect_color=(255, 255, 
 
 def main(filename, output_filename):
     img = cv2.imread(filename)
-    enable_flip=True
+    enable_flip=False
     if enable_flip:
         img = cv2.flip(img, 1)
     white_cane_detector = WhiteCaneDetector()

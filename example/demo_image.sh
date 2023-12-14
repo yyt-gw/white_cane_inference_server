@@ -24,15 +24,18 @@ function loop() {
         fi
     done    
 }
-
-in_dir="/white-cane-openvino-inference/data/tachikawa20231123"
-out_dir="/white-cane-openvino-inference/data/tachikawa20231123_overlay1"
+in_dir="/white-cane-openvino-inference/data/tachikawa20231128"
+out_dir="/white-cane-openvino-inference/data/tachikawa20231128_overlay1"
 loop $in_dir $out_dir
 
-in_dir="/white-cane-openvino-inference/data/tachikawa20231124"
-out_dir="/white-cane-openvino-inference/data/tachikawa20231124_overlay1"
-loop $in_dir $out_dir
-
-in_dir="/white-cane-openvino-inference/data/tachikawa20231122"
-out_dir="/white-cane-openvino-inference/data/tachikawa20231122_overlay1"
-loop $in_dir $out_dir
+# in_dir="/white-cane-openvino-inference/data/tachikawa20231123"
+# out_dir="/white-cane-openvino-inference/data/tachikawa20231123_overlay1"
+# loop $in_dir $out_dir
+# 
+# in_dir="/white-cane-openvino-inference/data/tachikawa20231124"
+# out_dir="/white-cane-openvino-inference/data/tachikawa20231124_overlay1"
+# loop $in_dir $out_dir
+# 
+# in_dir="/white-cane-openvino-inference/data/tachikawa20231122"
+# out_dir="/white-cane-openvino-inference/data/tachikawa20231122_overlay1"
+# loop $in_dir $out_dir
